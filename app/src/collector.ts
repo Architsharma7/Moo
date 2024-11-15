@@ -1,27 +1,21 @@
 import { ethers } from 'ethers';
-
-const TRADE_EVENT_TOPIC = ethers.id('Trade(address,address,address,uint256,uint256,uint256,bytes)');
-
-interface TradeEvent {
-    owner: string;
-    sellToken: string;
-    buyToken: string;
-    sellAmount: bigint;
-    buyAmount: bigint;
-    feeAmount: bigint;
-    orderUid: string;
-    timestamp: number;
-    txHash: string;
-}
+import { RPC_URL, TRADE_EVENT_TOPIC, TradeEvent } from './types';
 
 export async function fetchLastTradeEvents(
-    provider: ethers.JsonRpcProvider,
-    settlementContract: string,
-    blockCount: number = 5000,
+    provider: ethers.providers.JsonRpcProvider,
+    settlementContract: `0x${string}`,
+    sellToken: `0x${string}`,
+    buyToken: `0x${string}`,
+    blockCount: number = 15000,
 ): Promise<TradeEvent[]> {
     const currentBlock = await provider.getBlockNumber();
     const fromBlock = currentBlock - blockCount;
     const tradeEvents: TradeEvent[] = [];
+
+    if (fromBlock < 0 || fromBlock > currentBlock) {
+        console.error('Invalid block count');
+        return [];
+    }
 
     const logs = await provider.getLogs({
         address: settlementContract,
@@ -34,12 +28,7 @@ export async function fetchLastTradeEvents(
 
     await Promise.all(
         lastEvents.map(async log => {
-            // const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
-            //     ['address', 'address', 'address', 'uint256', 'uint256', 'uint256', 'bytes'],
-            //     log.data,
-            // );
-
-            const iface = new ethers.Interface([
+            const iface = new ethers.utils.Interface([
                 'event Trade(address indexed owner, address sellToken, address buyToken, uint256 sellAmount, uint256 buyAmount, uint256 feeAmount, bytes orderUid)',
             ]);
 
@@ -57,23 +46,37 @@ export async function fetchLastTradeEvents(
                         owner: parsedLog.args.owner.toLowerCase(),
                         sellToken: parsedLog.args.sellToken.toLowerCase(),
                         buyToken: parsedLog.args.buyToken.toLowerCase(),
-                        sellAmount: parsedLog.args.sellAmount,
-                        buyAmount: parsedLog.args.buyAmount,
-                        feeAmount: parsedLog.args.feeAmount,
+                        sellAmount: BigInt(parsedLog.args.sellAmount),
+                        buyAmount: BigInt(parsedLog.args.buyAmount),
+                        feeAmount: BigInt(parsedLog.args.feeAmount),
                         orderUid: parsedLog.args.orderUid,
                         timestamp: block.timestamp,
                         txHash: log.transactionHash,
+                        block: log.blockNumber,
                     });
                 }),
             );
         }),
     );
-
-    console.log(`Fetched ${tradeEvents.length} trade events`);
-    console.log(tradeEvents);
-    return tradeEvents;
+    return filterTradesByTokens(tradeEvents, sellToken, buyToken);
 }
 
-const provider = new ethers.JsonRpcProvider('https://rpc.sepolia.org');
+function filterTradesByTokens(events: TradeEvent[], sellToken: string, buyToken: string): TradeEvent[] {
+    const filteredEvents = events.filter(
+        event =>
+            event.sellToken.toLowerCase() === sellToken.toLowerCase() &&
+            event.buyToken.toLowerCase() === buyToken.toLowerCase(),
+    );
+    console.log(filteredEvents);
+    console.log(`Filtered ${filteredEvents.length} trade events`);
+    return filteredEvents;
+}
+
+const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 const settlementContract = '0x9008D19f58AAbD9eD0D60971565AA8510560ab41';
-fetchLastTradeEvents(provider, settlementContract);
+fetchLastTradeEvents(
+    provider,
+    settlementContract,
+    '0xfff9976782d46cc05630d1f6ebab18b2324d6b14',
+    '0xb4f1737af37711e9a5890d9510c9bb60e170cb0d',
+);
