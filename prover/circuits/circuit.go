@@ -6,41 +6,42 @@ import (
 
 type AppCircuit struct{}
 
-var USDCTokenAddr = sdk.ConstUint248("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
-var minimumVolume = sdk.ConstUint248(500000000) // minimum 500 USDC
 var _ sdk.AppCircuit = &AppCircuit{}
 
 func (c *AppCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
-	// Our app is only ever going to use one storage data at a time so
-	// we can simply limit the max number of data for storage to 1 and
-	// 0 for all others
 	return 32, 0, 0
 }
 
-func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
-	receipts := sdk.NewDataStream(api, in.Receipts)
-	receipt := sdk.GetUnderlying(receipts, 0)
+func (c *AppCircuit) Define(api *sdk.CircuitAPI, input sdk.DataInput) error {
+	receipts := sdk.NewDataStream(api, input.Receipts)
 
-	// Check logic
-	// The first field exports `from` parameter from Transfer Event
-	// It should use the second topic in Transfer Event log
-	api.Uint248.AssertIsEqual(receipt.Fields[0].Contract, USDCTokenAddr)
-	api.Uint248.AssertIsEqual(receipt.Fields[0].IsTopic, sdk.ConstUint248(1))
-	api.Uint248.AssertIsEqual(receipt.Fields[0].Index, sdk.ConstUint248(1))
+	prices := sdk.Map(receipts, func(r sdk.Receipt) sdk.Uint248 {
+		sellAmount := api.ToUint248(r.Fields[0].Value)
+		buyAmount := api.ToUint248(r.Fields[1].Value)
+		return api.Uint248.Div(buyAmount, sellAmount)
+	})
 
-	// Make sure two fields uses the same log to make sure account address linking with correct volume
-	api.Uint32.AssertIsEqual(receipt.Fields[0].LogPos, receipt.Fields[1].LogPos)
+	latestPrice := prices[prices.Length()-1]
+	meanPrice := sdk.Mean(prices)
 
-	// The second field exports `Volume` parameter from Transfer Event
-	// It should use Data in Transfer Event log
-	api.Uint248.AssertIsEqual(receipt.Fields[1].IsTopic, sdk.ConstUint248(0))
-	api.Uint248.AssertIsEqual(receipt.Fields[1].Index, sdk.ConstUint248(0))
+	squaredDiffs := sdk.Map(prices, func(p sdk.Uint248) sdk.Uint248 {
+		diff := api.Uint248.Sub(p, meanPrice)
+		return api.Uint248.Mul(diff, diff)
+	})
+	variance := sdk.Mean(squaredDiffs)
+	stdDev := api.Uint248.Sqrt(variance)
 
-	// Make sure this transfer has minimum 500 USDC volume
-	api.Uint248.AssertIsLessOrEqual(minimumVolume, api.ToUint248(receipt.Fields[1].Value))
+	currentDiff := api.Uint248.Sub(latestPrice, meanPrice)
+	zScore := api.Uint248.Div(currentDiff, stdDev)
 
-	api.OutputUint(64, api.ToUint248(receipt.BlockNum))
-	api.OutputAddress(api.ToUint248(receipt.Fields[0].Value))
-	api.OutputBytes32(receipt.Fields[1].Value)
+	minPrice := sdk.Min(prices)
+	maxPrice := sdk.Max(prices)
+
+	api.OutputUint(248, latestPrice)
+	api.OutputUint(248, meanPrice)
+	api.OutputUint(248, zScore)
+	api.OutputUint(248, minPrice)
+	api.OutputUint(248, maxPrice)
+
 	return nil
 }
