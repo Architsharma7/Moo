@@ -1,8 +1,7 @@
 import { MaxUint256 } from '@ethersproject/constants';
 import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
-import { Erc20 } from '@cowprotocol/abis';
 import { COMPOSABLE_COW_CONTRACT_ADDRESS } from '@cowprotocol/cow-sdk';
-import { COMPOSABLE_COW_ABI } from '../extras';
+import { COMPOSABLE_COW_ABI } from '../extras/ComposablecowABI';
 import { ethers } from 'ethers';
 
 export interface Order {
@@ -21,23 +20,18 @@ export interface ConditionalOrderParams {
 
 export interface OrderCreationContext {
     spender: string;
-    erc20Contract: Erc20;
+    erc20Contract: any;
 }
-export function createApprovalTxs(order: Order, context: OrderCreationContext): MetaTransactionData[] {
+export function createApprovalTxs(sellAddress: `0x${string}`, context: OrderCreationContext): MetaTransactionData[] {
     const { erc20Contract, spender } = context;
-
-    const { sellAddress } = order;
-
-    const sellTokenAddress = sellAddress;
     const sellAmountApproval = MaxUint256.toString();
 
     const txs: MetaTransactionData[] = [];
 
     const approveTx = {
-        to: sellTokenAddress,
+        to: sellAddress,
         data: erc20Contract.interface.encodeFunctionData('approve', [spender, sellAmountApproval]),
         value: '0',
-        operation: 0,
     };
 
     txs.push(approveTx);
@@ -59,7 +53,6 @@ export function createOrder(params: ConditionalOrderParams) {
             true,
         ]),
         value: '0',
-        operation: 0,
     };
 
     txs.push(createOrderTx);
