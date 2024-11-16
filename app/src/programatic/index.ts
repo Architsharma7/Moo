@@ -9,8 +9,8 @@ import { hexZeroPad } from '@ethersproject/bytes';
 
 const SIGNER_PRIVATE_KEY = '0xa3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968';
 const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
-const sellTokenAddress = '0x';
-const buyTokenAddress = '0x';
+const sellTokenAddress = '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
+const buyTokenAddress = '0x58eb19ef91e8a6327fed391b51ae1887b833cc91';
 const buyAmount = 1000;
 const sellAmount = 1000;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
@@ -83,4 +83,4 @@ export const createOrder = async () => {
     console.log(transactionResponse);
 };
 
-callbackAndApproval(sellTokenAddress);
+createOrder();

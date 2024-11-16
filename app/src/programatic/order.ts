@@ -53,6 +53,7 @@ export function createApprovalTxs(
 
     txs.push(approvebuyTx);
 
+    console.log(txs);
     return txs;
 }
 
