@@ -1,18 +1,22 @@
 import { createSafeClient } from '@safe-global/sdk-starter-kit';
 import { ExtensibleFallbackContext, extensibleFallbackSetupTxs } from './extensibleCallback';
 import { SupportedChainId } from '@cowprotocol/cow-sdk';
-import { createApprovalTxs } from './order';
+import { createApprovalTxs, Order } from './order';
 import { SigningMethod } from '@safe-global/protocol-kit';
-import { ethers } from 'ethers';
+import { Contract, ethers } from 'ethers';
 import { ERC20ABI } from '../extras/CowABI';
+import { createOrderTx, ConditionalOrderParams } from './order';
+import { COMPOSABLE_COW_ABI } from '../extras/ComposablecowABI';
+import { COMPOSABLE_COW_CONTRACT_ADDRESS } from '@cowprotocol/cow-sdk';
+import { hexZeroPad } from '@ethersproject/bytes';
 
 const SIGNER_PRIVATE_KEY = '';
 const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
 const sellTokenAddress = '0x';
+const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 
 export const callbackAndApproval = async (sellAddress: string) => {
     const safeAddress = '';
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     const safeClient = await createSafeClient({
         provider: RPC_URL,
         signer: SIGNER_PRIVATE_KEY,
@@ -41,4 +45,26 @@ export const callbackAndApproval = async (sellAddress: string) => {
 
     const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
     console.log(transactionResponse);
+};
+
+export const createOrder = async (orderdetails: Order) => {
+    const composableCow = new Contract(COMPOSABLE_COW_CONTRACT_ADDRESS[11155111], COMPOSABLE_COW_ABI, provider);
+    const abiCoder = new ethers.utils.AbiCoder();
+    const ORDER_STRUCT = 'tuple(uint256 sellAmount, uint256 buyAmount, address sellToken, address buyToken)';
+    const params: ConditionalOrderParams = {
+        staticInput: abiCoder.encode(
+            [ORDER_STRUCT],
+            [
+                {
+                    sellAmount: orderdetails.sellAmount,
+                    buyAmount: orderdetails.buyAmount,
+                    sellToken: orderdetails.sellAddress,
+                    buyToken: orderdetails.buyAddress,
+                },
+            ],
+        ),
+        salt: hexZeroPad(Buffer.from(Date.now().toString(16), 'hex'), 32),
+        handler: '',
+    };
+    const orderTx = await createOrderTx();
 };

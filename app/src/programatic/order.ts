@@ -9,7 +9,6 @@ export interface Order {
     buyAmount: number;
     sellAddress: `0x${string}`;
     buyAddress: `0x${string}`;
-    receiver: string;
 }
 
 export interface ConditionalOrderParams {
@@ -39,7 +38,7 @@ export function createApprovalTxs(sellAddress: `0x${string}`, context: OrderCrea
     return txs;
 }
 
-export function createOrder(params: ConditionalOrderParams) {
+export function createOrderTx(params: ConditionalOrderParams): MetaTransactionData[] {
     const txs: MetaTransactionData[] = [];
     const iface = new ethers.utils.Interface(COMPOSABLE_COW_ABI);
 
