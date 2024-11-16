@@ -7,28 +7,26 @@ import { brevisRequestABI } from './extras/BrevisRequestABI';
 async function createProofRequest(tradeEvents: TradeEvent[]): Promise<ProofRequest> {
     const proofReq = new ProofRequest();
 
-    tradeEvents.forEach(event => {
+    tradeEvents.forEach((event, index) => {
         proofReq.addReceipt(
             new ReceiptData({
                 tx_hash: event.txHash,
-                block_num: event.block,
                 fields: [
+                    // sellamount
                     new Field({
-                        contract: settlementContract,
-                        log_pos: 0,
+                        log_pos: event.logIndex,
                         is_topic: false,
                         field_index: 2,
-                        value: event.sellAmount.toString(),
                     }),
+                    // buyamount
                     new Field({
-                        contract: settlementContract,
-                        log_pos: 0,
+                        log_pos: event.logIndex,
                         is_topic: false,
                         field_index: 3,
-                        value: event.buyAmount.toString(),
                     }),
                 ],
             }),
+            index,
         );
     });
 
@@ -64,19 +62,18 @@ export async function submitProof() {
     try {
         const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         const brevis = new Brevis('appsdkv3.brevis.network:443');
-        const tradeEvents = await fetchLastTradeEvents(
-            provider,
-            settlementContract,
-            '0xfff9976782d46cc05630d1f6ebab18b2324d6b14',
-            '0xb4f1737af37711e9a5890d9510c9bb60e170cb0d',
-        );
+        const tradeEvents = await fetchLastTradeEvents(provider, settlementContract);
+        // if (tradeEvents.length === 0) {
+        //     console.log('No trade events found');
+        //     return;
+        // }
         const proofReq = await createProofRequest(tradeEvents);
         const proofRes = await sendProof(proofReq);
         if (!proofRes) {
             console.log('Proof failed');
             return;
         }
-        const brevisRes = await brevis.submit(proofReq, proofRes, 11155111, 11155111, 0, '', callbackAddress);
+        const brevisRes = await brevis.submit(proofReq, proofRes, 1, 11155111, 0, '', '');
         const fee = brevisRes.fee;
         const id = brevisRes.queryKey;
         console.log('fee', fee);
@@ -92,7 +89,7 @@ export async function submitProof() {
 async function payFees(fee: string, id: any) {
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     //@ts-ignore
-    const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const signer = new ethers.Wallet('a3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968', provider);
     const address = signer.address;
     const nonce = await provider.getTransactionCount(address);
     const brevisRequest = new ethers.Contract('0xa082F86d9d1660C29cf3f962A31d7D20E367154F', brevisRequestABI, signer);
@@ -102,8 +99,14 @@ async function payFees(fee: string, id: any) {
     if (balance.lt(requiredFee)) {
         throw new Error('Insufficient balance to pay the fees.');
     }
-    const tx = await brevisRequest.sendRequest(id, nonce, address, '', 0, { value: requiredFee });
+    const callback = {
+        target: callbackAddress,
+        gas: 400000,
+    };
+    const tx = await brevisRequest.sendRequest(id, nonce, address, callback, 0, { value: requiredFee });
     console.log('Transaction sent:', tx.hash);
     const receipt = await tx.wait();
     console.log('Transaction confirmed:', receipt);
 }
+
+submitProof();
