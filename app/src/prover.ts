@@ -63,10 +63,10 @@ export async function submitProof() {
         const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         const brevis = new Brevis('appsdkv3.brevis.network:443');
         const tradeEvents = await fetchLastTradeEvents(provider, settlementContract);
-        // if (tradeEvents.length === 0) {
-        //     console.log('No trade events found');
-        //     return;
-        // }
+        if (tradeEvents.length === 0) {
+            console.log('No trade events found');
+            return;
+        }
         const proofReq = await createProofRequest(tradeEvents);
         const proofRes = await sendProof(proofReq);
         if (!proofRes) {

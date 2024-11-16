@@ -16,7 +16,7 @@ const sellAmount = 1000;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 const safeAddress = '0x542e054E00D236Ec7330f943797f49B047be6C8c';
 
-export const callbackAndApproval = async (sellAddress: string) => {
+export const callbackAndApproval = async () => {
     const safeClient = await createSafeClient({
         provider: RPC_URL,
         signer: SIGNER_PRIVATE_KEY,

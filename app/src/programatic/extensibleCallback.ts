@@ -15,7 +15,6 @@ export interface ExtensibleFallbackContext {
 
 export async function getSignatureVerifierContract(context: ExtensibleFallbackContext): Promise<any> {
     const { safeAddress, provider } = context;
-    // SignatureVerifierMuxer
     return new Contract(safeAddress, safeSingletonABI, provider);
 }
 

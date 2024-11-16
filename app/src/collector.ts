@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { RPC_URL, TRADE_EVENT_TOPIC, TradeEvent } from './types';
+import { TRADE_EVENT_TOPIC, TradeEvent } from './types';
 
 export async function fetchLastTradeEvents(
     provider: ethers.providers.JsonRpcProvider,
@@ -61,12 +61,6 @@ export async function fetchLastTradeEvents(
 
         if (!matchFound && seenPairs.has(pairKey)) {
             const previousEvent = seenPairs.get(pairKey)!;
-            console.log('Found first matching pair:', {
-                sellToken: event.sellToken,
-                buyToken: event.buyToken,
-                blocks: [previousEvent.block, event.block],
-                logIndexes: [previousEvent.logIndex, event.logIndex],
-            });
             tradeEvents.push(previousEvent, event);
             matchFound = true;
             break;
@@ -82,6 +76,8 @@ export async function fetchLastTradeEvents(
     return tradeEvents;
 }
 
+// 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+// 0xdac17f958d2ee523a2206206994597c13d831ec7
 // export async function fetchLastTradeEvents(
 //     provider: ethers.providers.JsonRpcProvider,
 //     settlementContract: `0x${string}`,
