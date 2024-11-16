@@ -31,6 +31,12 @@ func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		return quotient
 	})
 
+	count := sdk.Count(receipts)
+	api.Uint248.AssertIsEqual(
+		api.Uint248.IsGreaterThan(count, sdk.ConstUint248(0)),
+		sdk.ConstUint248(10),
+	)
+
 	lastReceipt := sdk.GetUnderlying(receipts, 31) // Last position since max is 32
 	latestPrice, _ := u248.Div(api.ToUint248(lastReceipt.Fields[1].Value), api.ToUint248(lastReceipt.Fields[0].Value))
 

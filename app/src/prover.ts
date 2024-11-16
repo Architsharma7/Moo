@@ -81,19 +81,29 @@ export async function submitProof() {
         const id = brevisRes.queryKey;
         console.log('fee', fee);
         console.log('id', id);
-        //TODO: Pay the fees if needed
-        brevis.wait(brevisRes.queryKey, 11155111);
+        await payFees(fee, id);
+        await brevis.wait(brevisRes.queryKey, 11155111);
     } catch (error) {
         console.log(error);
     }
 }
 
 // INFO: Right now the fees is set to 0 by brevis
-async function payFees() {
+async function payFees(fee: string, id: any) {
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     //@ts-ignore
     const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const address = signer.address;
+    const nonce = await provider.getTransactionCount(address);
     const brevisRequest = new ethers.Contract('0xa082F86d9d1660C29cf3f962A31d7D20E367154F', brevisRequestABI, signer);
-    //TODO: if needed to pay the fees, check the balance and pay the fees using the brevisRequest contract, calling
-    // sendRequest function. See the parameters on etherscan.
+    const balance = await provider.getBalance(signer.address);
+    console.log(`Current Balance: ${ethers.utils.formatEther(balance)} ETH`);
+    const requiredFee = ethers.utils.parseEther(fee);
+    if (balance.lt(requiredFee)) {
+        throw new Error('Insufficient balance to pay the fees.');
+    }
+    const tx = await brevisRequest.sendRequest(id, nonce, address, '', 1, { value: requiredFee });
+    console.log('Transaction sent:', tx.hash);
+    const receipt = await tx.wait();
+    console.log('Transaction confirmed:', receipt);
 }
