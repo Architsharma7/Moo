@@ -8,6 +8,8 @@ import {ComposableCoW} from "./ComposableCoW.sol";
 import {IConditionalOrder, IConditionalOrderGenerator, BaseConditionalOrder} from "./BaseConditionalOrder.sol";
 import {GPv2Order} from "./GPv2order.sol";
 
+string constant TOO_EARLY = "too early, brevis data not available";
+
 contract MainContract is BrevisApp, Ownable, BaseConditionalOrder {
     struct PriceStatistics {
         uint256 latestPrice;
@@ -50,8 +52,12 @@ contract MainContract is BrevisApp, Ownable, BaseConditionalOrder {
     ) public view override returns (GPv2Order.Data memory order) {
         GPv2Order.Data memory inputOrder = abi.decode(staticInput, (GPv2Order.Data));
 
-        require(priceStats.latestPrice != 0, "Data not fetched from brevis yet");
-        require(block.timestamp - priceStats.timestamp <= MAX_DATA_AGE, "Price data too old");
+        if (priceStats.timestamp == 0) {
+            revert IConditionalOrder.PollTryAtBlock(block.number + 10, TOO_EARLY);
+        }
+        if (block.timestamp - priceStats.timestamp > MAX_DATA_AGE) {
+            revert IConditionalOrder.PollTryAtBlock(block.number + 10, "Price data too old");
+        }
         require(priceStats.zScore >= Z_SCORE_THRESHOLD, "Price movement not significant");
 
         bool shouldBuy = priceStats.latestPrice < priceStats.meanPrice;
@@ -90,12 +96,6 @@ contract MainContract is BrevisApp, Ownable, BaseConditionalOrder {
         });
 
         emit StatsUpdated(latestPrice, meanPrice, zScore, minPrice, maxPrice, block.timestamp);
-    }
-
-    function getPriceStats() public view returns (PriceStatistics memory stats) {
-        stats = priceStats;
-        require(block.timestamp - stats.timestamp <= MAX_DATA_AGE, "Data too old");
-        return stats;
     }
 
     function decodeOutput(

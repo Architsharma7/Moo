@@ -20,7 +20,7 @@ export async function getSignatureVerifierContract(context: ExtensibleFallbackCo
 }
 
 export async function extensibleFallbackSetupTxs(context: ExtensibleFallbackContext): Promise<MetaTransactionData[]> {
-    const { chainId, safeAddress, settlementContract } = context;
+    const { safeAddress, settlementContract } = context;
     const gvp2settelment = new Contract(settlementContract, GPv2Settlement, context.provider);
 
     const domainSeparator = await gvp2settelment.callStatic.domainSeparator();
