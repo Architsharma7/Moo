@@ -102,7 +102,7 @@ async function payFees(fee: string, id: any) {
     if (balance.lt(requiredFee)) {
         throw new Error('Insufficient balance to pay the fees.');
     }
-    const tx = await brevisRequest.sendRequest(id, nonce, address, '', 1, { value: requiredFee });
+    const tx = await brevisRequest.sendRequest(id, nonce, address, '', 0, { value: requiredFee });
     console.log('Transaction sent:', tx.hash);
     const receipt = await tx.wait();
     console.log('Transaction confirmed:', receipt);
