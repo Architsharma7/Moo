@@ -3,20 +3,18 @@ import { ExtensibleFallbackContext, extensibleFallbackSetupTxs } from './extensi
 import { SupportedChainId } from '@cowprotocol/cow-sdk';
 import { createApprovalTxs, Order } from './order';
 import { SigningMethod } from '@safe-global/protocol-kit';
-import { Contract, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { ERC20ABI } from '../extras/CowABI';
 import { createOrderTx, ConditionalOrderParams } from './order';
-import { COMPOSABLE_COW_ABI } from '../extras/ComposablecowABI';
-import { COMPOSABLE_COW_CONTRACT_ADDRESS } from '@cowprotocol/cow-sdk';
 import { hexZeroPad } from '@ethersproject/bytes';
 
 const SIGNER_PRIVATE_KEY = '';
 const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
 const sellTokenAddress = '0x';
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+const safeAddress = '';
 
 export const callbackAndApproval = async (sellAddress: string) => {
-    const safeAddress = '';
     const safeClient = await createSafeClient({
         provider: RPC_URL,
         signer: SIGNER_PRIVATE_KEY,
@@ -48,8 +46,12 @@ export const callbackAndApproval = async (sellAddress: string) => {
 };
 
 export const createOrder = async (orderdetails: Order) => {
-    const composableCow = new Contract(COMPOSABLE_COW_CONTRACT_ADDRESS[11155111], COMPOSABLE_COW_ABI, provider);
     const abiCoder = new ethers.utils.AbiCoder();
+    const safeClient = await createSafeClient({
+        provider: RPC_URL,
+        signer: SIGNER_PRIVATE_KEY,
+        safeAddress: safeAddress,
+    });
     const ORDER_STRUCT = 'tuple(uint256 sellAmount, uint256 buyAmount, address sellToken, address buyToken)';
     const params: ConditionalOrderParams = {
         staticInput: abiCoder.encode(
@@ -64,7 +66,14 @@ export const createOrder = async (orderdetails: Order) => {
             ],
         ),
         salt: hexZeroPad(Buffer.from(Date.now().toString(16), 'hex'), 32),
+        //Todo: Add handler address
         handler: '',
     };
-    const orderTx = await createOrderTx();
+    const orderTx = await createOrderTx(params);
+    const tx = await safeClient.protocolKit.createTransaction({ transactions: orderTx });
+
+    const safeTransaction = await safeClient.protocolKit.signTransaction(tx, SigningMethod.ETH_SIGN);
+
+    const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
+    console.log(transactionResponse);
 };
