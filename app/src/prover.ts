@@ -4,7 +4,7 @@ import { fetchLastTradeEvents } from './collector';
 import { ethers } from 'ethers';
 import { brevisRequestABI } from './extras/BrevisRequestABI';
 
-export async function createProofRequest(tradeEvents: TradeEvent[]): Promise<ProofRequest> {
+async function createProofRequest(tradeEvents: TradeEvent[]): Promise<ProofRequest> {
     const proofReq = new ProofRequest();
 
     tradeEvents.forEach(event => {
@@ -17,14 +17,14 @@ export async function createProofRequest(tradeEvents: TradeEvent[]): Promise<Pro
                         contract: settlementContract,
                         log_pos: 0,
                         is_topic: false,
-                        field_index: 0,
+                        field_index: 2,
                         value: event.sellAmount.toString(),
                     }),
                     new Field({
                         contract: settlementContract,
                         log_pos: 0,
                         is_topic: false,
-                        field_index: 1,
+                        field_index: 3,
                         value: event.buyAmount.toString(),
                     }),
                 ],
@@ -36,7 +36,7 @@ export async function createProofRequest(tradeEvents: TradeEvent[]): Promise<Pro
     return proofReq;
 }
 
-export async function sendProof(proofReq: ProofRequest) {
+async function sendProof(proofReq: ProofRequest) {
     const prover = new Prover('localhost:33247');
     const proofRes = await prover.prove(proofReq);
     if (proofRes.has_err) {
@@ -88,7 +88,8 @@ export async function submitProof() {
     }
 }
 
-export async function payFees() {
+// INFO: Right now the fees is set to 0 by brevis, so no need to call it
+async function payFees() {
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     //@ts-ignore
     const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
