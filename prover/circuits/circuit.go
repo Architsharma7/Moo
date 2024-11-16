@@ -2,6 +2,7 @@ package circuits
 
 import (
 	"github.com/brevis-network/brevis-sdk/sdk"
+	"github.com/celer-network/goutils/log"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -25,19 +26,29 @@ func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	})
 
 	prices := sdk.Map(receipts, func(r sdk.Receipt) sdk.Uint248 {
+		log.Infoln(r.BlockNum)
 		sellAmount := api.ToUint248(r.Fields[0].Value)
+		log.Infoln(sellAmount)
 		buyAmount := api.ToUint248(r.Fields[1].Value)
+		log.Infoln(buyAmount)
 		quotient, _ := u248.Div(buyAmount, sellAmount)
 		return quotient
 	})
 
 	count := sdk.Count(receipts)
+	raw := in.Receipts.Raw
+	var lastReceipt sdk.Receipt
+	for i := len(raw) - 1; i >= 0; i-- {
+		if raw[i].BlockNum != sdk.ConstUint32(0) {
+			lastReceipt = raw[i]
+			break
+		}
+	}
 	api.Uint248.AssertIsEqual(
 		api.Uint248.IsGreaterThan(count, sdk.ConstUint248(0)),
 		sdk.ConstUint248(10),
 	)
 
-	lastReceipt := sdk.GetUnderlying(receipts, 31) // Last position since max is 32
 	latestPrice, _ := u248.Div(api.ToUint248(lastReceipt.Fields[1].Value), api.ToUint248(lastReceipt.Fields[0].Value))
 
 	meanPrice := sdk.Mean(prices)

@@ -20,6 +20,7 @@ require (
 	github.com/brevis-network/zk-hash v0.0.0-20241108052253-b7ab3c6a195b // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/cbergoon/merkletree v0.2.0 // indirect
+	github.com/celer-network/goutils v0.2.0 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cockroachdb/errors v1.11.3 // indirect

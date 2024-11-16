@@ -49,7 +49,7 @@ contract MainContract is BrevisApp, Ownable {
         emit StatsUpdated(latestPrice, meanPrice, zScore, minPrice, maxPrice, block.timestamp);
     }
 
-    function getPriceStats() external view returns (PriceStatistics memory stats) {
+    function getPriceStats() public view returns (PriceStatistics memory stats) {
         stats = priceStats;
         require(block.timestamp - stats.timestamp <= MAX_DATA_AGE, "Data too old");
         return stats;

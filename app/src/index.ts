@@ -1,5 +1,4 @@
 import { Brevis, ErrCode, ProofRequest, Prover, ReceiptData, Field } from 'brevis-sdk-typescript';
-import { ethers } from 'ethers';
 
 async function main() {
     const prover = new Prover('localhost:33247');
@@ -8,18 +7,18 @@ async function main() {
     const proofReq = new ProofRequest();
 
     // Assume transaction hash will provided by command line
-    const hash = process.argv[2]
+    const hash = process.argv[2];
 
-    // Brevis Partner KEY IS NOT required to submit request to Brevis Gateway. 
+    // Brevis Partner KEY IS NOT required to submit request to Brevis Gateway.
     // It is used only for Brevis Partner Flow
-    const brevis_partner_key = process.argv[3] ?? ""
-    const callbackAddress = process.argv[4] ?? ""
+    const brevis_partner_key = process.argv[3] ?? '';
+    const callbackAddress = process.argv[4] ?? '';
 
     if (hash.length === 0) {
-        console.error("empty transaction hash")
-        return 
+        console.error('empty transaction hash');
+        return;
     }
-    
+
     proofReq.addReceipt(
         new ReceiptData({
             tx_hash: hash,
@@ -38,7 +37,7 @@ async function main() {
         }),
     );
 
-    console.log(`Send prove request for ${hash}`)
+    console.log(`Send prove request for ${hash}`);
 
     const proofRes = await prover.prove(proofReq);
     // error handling
