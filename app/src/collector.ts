@@ -6,7 +6,7 @@ export async function fetchLastTradeEvents(
     settlementContract: `0x${string}`,
     blockCount: number = 70,
 ): Promise<TradeEvent[]> {
-    const currentBlock = await provider.getBlockNumber();
+    const currentBlock = (await provider.getBlockNumber()) - 500;
     const fromBlock = currentBlock - blockCount;
     console.log(currentBlock, fromBlock);
     const seenPairs = new Map<string, TradeEvent>();

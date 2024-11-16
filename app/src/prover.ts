@@ -87,11 +87,11 @@ export async function submitProof() {
 
 // INFO: Right now the fees is set to 0 by brevis
 async function payFees(fee: string, id: any) {
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const provider = new ethers.providers.JsonRpcProvider('https://sepolia.drpc.org');
     //@ts-ignore
     const signer = new ethers.Wallet('a3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968', provider);
+    console.log('Signer:', signer.address);
     const address = signer.address;
-    const nonce = await provider.getTransactionCount(address);
     const brevisRequest = new ethers.Contract('0xa082F86d9d1660C29cf3f962A31d7D20E367154F', brevisRequestABI, signer);
     const balance = await provider.getBalance(signer.address);
     console.log(`Current Balance: ${ethers.utils.formatEther(balance)} ETH`);
@@ -103,7 +103,7 @@ async function payFees(fee: string, id: any) {
         target: callbackAddress,
         gas: 400000,
     };
-    const tx = await brevisRequest.sendRequest(id, nonce, address, callback, 0, { value: requiredFee });
+    const tx = await brevisRequest.sendRequest(id.query_hash, id.nonce, address, callback, 0, { value: requiredFee });
     console.log('Transaction sent:', tx.hash);
     const receipt = await tx.wait();
     console.log('Transaction confirmed:', receipt);

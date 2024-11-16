@@ -50,7 +50,6 @@ func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		buyAmount := api.ToUint248(r.Fields[1].Value)
 		log.Infoln(buyAmount)
 		buyAmount = u248.Mul(buyAmount, ScaleFactor)
-		sellAmount = u248.Mul(sellAmount, ScaleFactor)
 		quotient, _ := u248.Div(buyAmount, sellAmount)
 		log.Infoln("quotient", quotient)
 		return quotient
@@ -84,7 +83,7 @@ func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	log.Infoln("latest price buy", lastReceipt.Fields[1].Value)
 	log.Infoln("latest price sell", lastReceipt.Fields[0].Value)
 
-	latestPrice, _ := u248.Div((u248.Mul(api.ToUint248(lastReceipt.Fields[1].Value), ScaleFactor)), (u248.Mul(api.ToUint248(lastReceipt.Fields[0].Value), ScaleFactor)))
+	latestPrice, _ := u248.Div((u248.Mul(api.ToUint248(lastReceipt.Fields[1].Value), ScaleFactor)), api.ToUint248(lastReceipt.Fields[0].Value))
 	log.Infoln("latest price", latestPrice)
 
 	meanPrice := sdk.Mean(prices)
@@ -101,7 +100,7 @@ func (c *AppCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	log.Infoln("std dev", stdDev)
 	currentDiff := u248.Sub(latestPrice, meanPrice)
 	log.Infoln("current diff", currentDiff)
-	zScore, _ := u248.Div(currentDiff, stdDev)
+	zScore, _ := u248.Div(u248.Mul(currentDiff, ScaleFactor), stdDev)
 	log.Infoln("z score", zScore)
 
 	minPrice := sdk.Min(prices)
