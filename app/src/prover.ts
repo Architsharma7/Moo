@@ -88,7 +88,7 @@ export async function submitProof() {
     }
 }
 
-// INFO: Right now the fees is set to 0 by brevis, so no need to call it
+// INFO: Right now the fees is set to 0 by brevis
 async function payFees() {
     const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     //@ts-ignore

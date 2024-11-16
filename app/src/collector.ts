@@ -6,7 +6,7 @@ export async function fetchLastTradeEvents(
     settlementContract: `0x${string}`,
     sellToken: `0x${string}`,
     buyToken: `0x${string}`,
-    blockCount: number = 15000,
+    blockCount: number = 10000,
 ): Promise<TradeEvent[]> {
     const currentBlock = await provider.getBlockNumber();
     const fromBlock = currentBlock - blockCount;
@@ -69,6 +69,14 @@ function filterTradesByTokens(events: TradeEvent[], sellToken: string, buyToken:
     );
     console.log(filteredEvents);
     console.log(`Filtered ${filteredEvents.length} trade events`);
+    if (filteredEvents.length === 0) {
+        console.log('No trade events found for the specified tokens');
+        return [];
+    }
+    if (filteredEvents.length < 10) {
+        console.log('Less than required number of trade events found for the specified tokens');
+        return [];
+    }
     return filteredEvents;
 }
 

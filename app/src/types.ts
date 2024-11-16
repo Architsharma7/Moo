@@ -16,5 +16,5 @@ export interface TradeEvent {
 }
 
 export const settlementContract = '0x9008D19f58AAbD9eD0D60971565AA8510560ab41';
-export const RPC_URL = 'https://sepolia.drpc.org';
+export const RPC_URL = 'https://gateway.tenderly.co/public/sepolia';
 export const callbackAddress = '0x';
