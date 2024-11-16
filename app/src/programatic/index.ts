@@ -4,15 +4,17 @@ import { SupportedChainId } from '@cowprotocol/cow-sdk';
 import { createApprovalTxs, Order } from './order';
 import { SigningMethod } from '@safe-global/protocol-kit';
 import { ethers } from 'ethers';
-import { ERC20ABI } from '../extras/CowABI';
 import { createOrderTx, ConditionalOrderParams } from './order';
 import { hexZeroPad } from '@ethersproject/bytes';
 
-const SIGNER_PRIVATE_KEY = '';
+const SIGNER_PRIVATE_KEY = '0xa3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968';
 const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
 const sellTokenAddress = '0x';
+const buyTokenAddress = '0x';
+const buyAmount = 1000;
+const sellAmount = 1000;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-const safeAddress = '';
+const safeAddress = '0x542e054E00D236Ec7330f943797f49B047be6C8c';
 
 export const callbackAndApproval = async (sellAddress: string) => {
     const safeClient = await createSafeClient({
@@ -28,12 +30,10 @@ export const callbackAndApproval = async (sellAddress: string) => {
         provider: provider,
     };
     const callbackTxs = await extensibleFallbackSetupTxs(contextForFallback);
-    const erc20Contract = new ethers.Contract(sellAddress, ERC20ABI, provider);
     const orderContext = {
         spender: '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110',
-        erc20Contract: erc20Contract,
     };
-    const approvalTxs = await createApprovalTxs(sellTokenAddress, orderContext);
+    const approvalTxs = await createApprovalTxs(sellTokenAddress, buyTokenAddress, orderContext);
 
     const txs = callbackTxs.concat(approvalTxs);
 
@@ -45,7 +45,13 @@ export const callbackAndApproval = async (sellAddress: string) => {
     console.log(transactionResponse);
 };
 
-export const createOrder = async (orderdetails: Order) => {
+export const createOrder = async () => {
+    const orderdetails: Order = {
+        sellAmount: sellAmount,
+        buyAmount: buyAmount,
+        sellAddress: sellTokenAddress,
+        buyAddress: buyTokenAddress,
+    };
     const abiCoder = new ethers.utils.AbiCoder();
     const safeClient = await createSafeClient({
         provider: RPC_URL,
@@ -66,8 +72,7 @@ export const createOrder = async (orderdetails: Order) => {
             ],
         ),
         salt: hexZeroPad(Buffer.from(Date.now().toString(16), 'hex'), 32),
-        //Todo: Add handler address
-        handler: '',
+        handler: '0x902da116B35AfaAa9841b2b16603f8a18aD95Af3',
     };
     const orderTx = await createOrderTx(params);
     const tx = await safeClient.protocolKit.createTransaction({ transactions: orderTx });
@@ -77,3 +82,5 @@ export const createOrder = async (orderdetails: Order) => {
     const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
     console.log(transactionResponse);
 };
+
+callbackAndApproval(sellTokenAddress);

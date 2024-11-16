@@ -3,6 +3,7 @@ import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
 import { COMPOSABLE_COW_CONTRACT_ADDRESS } from '@cowprotocol/cow-sdk';
 import { COMPOSABLE_COW_ABI } from '../extras/ComposablecowABI';
 import { ethers } from 'ethers';
+import { ERC20ABI } from '../extras/CowABI';
 
 export interface Order {
     sellAmount: number;
@@ -19,21 +20,38 @@ export interface ConditionalOrderParams {
 
 export interface OrderCreationContext {
     spender: string;
-    erc20Contract: any;
 }
-export function createApprovalTxs(sellAddress: `0x${string}`, context: OrderCreationContext): MetaTransactionData[] {
-    const { erc20Contract, spender } = context;
+
+export function createApprovalTxs(
+    sellAddress: `0x${string}`,
+    buyAddress: `0x${string}`,
+    context: OrderCreationContext,
+): MetaTransactionData[] {
+    const { spender } = context;
     const sellAmountApproval = MaxUint256.toString();
 
     const txs: MetaTransactionData[] = [];
 
-    const approveTx = {
+    const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const erc20SellContract = new ethers.Contract(sellAddress, ERC20ABI, provider);
+    const erc20BuyContract = new ethers.Contract(buyAddress, ERC20ABI, provider);
+
+    const approvesellTx = {
         to: sellAddress,
-        data: erc20Contract.interface.encodeFunctionData('approve', [spender, sellAmountApproval]),
+        data: erc20SellContract.interface.encodeFunctionData('approve', [spender, sellAmountApproval]),
         value: '0',
     };
 
-    txs.push(approveTx);
+    txs.push(approvesellTx);
+
+    const approvebuyTx = {
+        to: buyAddress,
+        data: erc20BuyContract.interface.encodeFunctionData('approve', [spender, sellAmountApproval]),
+        value: '0',
+    };
+
+    txs.push(approvebuyTx);
 
     return txs;
 }

@@ -2,9 +2,13 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {BrevisApp} from "./lib/BrevisApp.sol";
+import {BrevisApp} from "./BrevisApp.sol";
+import {ComposableCoW} from "./ComposableCoW.sol";
 
-contract MainContract is BrevisApp, Ownable {
+import {IConditionalOrder, IConditionalOrderGenerator, BaseConditionalOrder} from "./BaseConditionalOrder.sol";
+import {GPv2Order} from "./GPv2order.sol";
+
+contract MainContract is BrevisApp, Ownable, BaseConditionalOrder {
     struct PriceStatistics {
         uint256 latestPrice;
         uint256 meanPrice;
@@ -17,9 +21,9 @@ contract MainContract is BrevisApp, Ownable {
     uint256 public constant MAX_DATA_AGE = 1 days;
     uint256 public constant Z_SCORE_THRESHOLD = 1e18;
     bytes32 public vkHash;
-    bytes32 public constant KIND_SELL = bytes32("sell");
-    bytes32 public constant KIND_BUY = bytes32("buy");
-    bytes32 public constant BALANCE_ERC20 = bytes32("erc20");
+    bytes32 public constant KIND_SELL = keccak256("sell");
+    bytes32 public constant KIND_BUY = keccak256("buy");
+    bytes32 public constant BALANCE_ERC20 = keccak256("erc20");
     ComposableCoW public immutable composableCow;
 
     PriceStatistics public priceStats;
@@ -33,7 +37,7 @@ contract MainContract is BrevisApp, Ownable {
         uint256 timestamp
     );
 
-    constructor(address brevisRequest, ComposableCoW _composableCow) BrevisApp(brevisRequest) Ownable(msg.sender) {
+    constructor(address brevisRequest, ComposableCoW _composableCow) BrevisApp(brevisRequest) Ownable() {
         composableCow = _composableCow;
     }
 
@@ -46,6 +50,7 @@ contract MainContract is BrevisApp, Ownable {
     ) public view override returns (GPv2Order.Data memory order) {
         GPv2Order.Data memory inputOrder = abi.decode(staticInput, (GPv2Order.Data));
 
+        require(priceStats.latestPrice != 0, "Data not fetched from brevis yet");
         require(block.timestamp - priceStats.timestamp <= MAX_DATA_AGE, "Price data too old");
         require(priceStats.zScore >= Z_SCORE_THRESHOLD, "Price movement not significant");
 
@@ -55,11 +60,11 @@ contract MainContract is BrevisApp, Ownable {
         order = GPv2Order.Data({
             sellToken: shouldBuy ? inputOrder.buyToken : inputOrder.sellToken,
             buyToken: shouldBuy ? inputOrder.sellToken : inputOrder.buyToken,
-            receiver: inputOrder.receiver == address(0) ? owner : inputOrder.receiver,
+            receiver: address(0),
             sellAmount: inputOrder.sellAmount,
             buyAmount: inputOrder.buyAmount,
             validTo: uint32(block.timestamp + 1 days),
-            appData: inputOrder.appData,
+            appData: 0,
             feeAmount: 0,
             kind: kind,
             partiallyFillable: false,
