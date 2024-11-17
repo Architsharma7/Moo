@@ -63,7 +63,7 @@ export function createOrderTx(params: ConditionalOrderParams): MetaTransactionDa
 
     const createOrderTx = {
         // only for sepolia for now
-        to: COMPOSABLE_COW_CONTRACT_ADDRESS[11155111],
+        to: '0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74',
         data: iface.encodeFunctionData('createWithContext', [
             params,
             '0x52eD56Da04309Aca4c3FECC595298d80C2f16BAc',

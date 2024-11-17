@@ -110,6 +110,7 @@ contract MainContract is BrevisApp, Ownable, BaseConditionalOrder {
         zScore = uint256(bytes32(o[64:96]));
         minPrice = uint256(bytes32(o[96:128]));
         maxPrice = uint256(bytes32(o[128:160]));
+        return (latestPrice, meanPrice, zScore, minPrice, maxPrice);
     }
 
     function setVkHash(bytes32 _vkHash) external onlyOwner {

@@ -101,7 +101,7 @@ async function payFees(fee: string, id: any) {
     }
     const callback = {
         target: callbackAddress,
-        gas: 400000,
+        gas: 600000,
     };
     const tx = await brevisRequest.sendRequest(id.query_hash, id.nonce, address, callback, 0, { value: requiredFee });
     console.log('Transaction sent:', tx.hash);

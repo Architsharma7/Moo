@@ -6,15 +6,18 @@ import { SigningMethod } from '@safe-global/protocol-kit';
 import { ethers } from 'ethers';
 import { createOrderTx, ConditionalOrderParams } from './order';
 import { hexZeroPad } from '@ethersproject/bytes';
+import {
+    SIGNER_PRIVATE_KEY,
+    safeAddress,
+    sellAmount,
+    sellTokenAddress,
+    buyAmount,
+    buyTokenAddress,
+    maincontractAddress,
+} from '../types';
 
-const SIGNER_PRIVATE_KEY = '0xa3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968';
 const RPC_URL = 'https://rpc.ankr.com/eth_sepolia';
-const sellTokenAddress = '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
-const buyTokenAddress = '0x58eb19ef91e8a6327fed391b51ae1887b833cc91';
-const buyAmount = 1000;
-const sellAmount = 1000;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-const safeAddress = '0x542e054E00D236Ec7330f943797f49B047be6C8c';
 
 export const callbackAndApproval = async () => {
     const safeClient = await createSafeClient({
@@ -42,7 +45,7 @@ export const callbackAndApproval = async () => {
     const safeTransaction = await safeClient.protocolKit.signTransaction(tx, SigningMethod.ETH_SIGN);
 
     const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
-    console.log(transactionResponse);
+    console.log(transactionResponse.transactionResponse, transactionResponse.hash);
 };
 
 export const createOrder = async () => {
@@ -72,7 +75,7 @@ export const createOrder = async () => {
             ],
         ),
         salt: hexZeroPad(Buffer.from(Date.now().toString(16), 'hex'), 32),
-        handler: '0x902da116B35AfaAa9841b2b16603f8a18aD95Af3',
+        handler: maincontractAddress,
     };
     const orderTx = await createOrderTx(params);
     const tx = await safeClient.protocolKit.createTransaction({ transactions: orderTx });
@@ -80,7 +83,12 @@ export const createOrder = async () => {
     const safeTransaction = await safeClient.protocolKit.signTransaction(tx, SigningMethod.ETH_SIGN);
 
     const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
-    console.log(transactionResponse);
+    console.log(transactionResponse.transactionResponse, transactionResponse.hash);
 };
 
-createOrder();
+const main = async () => {
+    await callbackAndApproval();
+    await createOrder();
+};
+
+main();
