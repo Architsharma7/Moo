@@ -39,13 +39,16 @@ export const callbackAndApproval = async () => {
     const approvalTxs = await createApprovalTxs(sellTokenAddress, buyTokenAddress, orderContext);
 
     const txs = callbackTxs.concat(approvalTxs);
+    console.log(txs);
 
     const tx = await safeClient.protocolKit.createTransaction({ transactions: txs });
+    console.log('tx', tx);
 
     const safeTransaction = await safeClient.protocolKit.signTransaction(tx, SigningMethod.ETH_SIGN);
+    console.log('safe tx', safeTransaction);
 
-    const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
-    console.log(transactionResponse.transactionResponse, transactionResponse.hash);
+    // const transactionResponse = await safeClient.protocolKit.executeTransaction(safeTransaction);
+    // console.log(transactionResponse.transactionResponse, transactionResponse.hash);
 };
 
 export const createOrder = async () => {

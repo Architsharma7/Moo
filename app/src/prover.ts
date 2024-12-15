@@ -89,7 +89,7 @@ export async function submitProof() {
 async function payFees(fee: string, id: any) {
     const provider = new ethers.providers.JsonRpcProvider('https://sepolia.drpc.org');
     //@ts-ignore
-    const signer = new ethers.Wallet('a3fca102e683a3c210a99e85c81d5e8725e5845cf1ada682d7afe433a0e2b968', provider);
+    const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
     console.log('Signer:', signer.address);
     const address = signer.address;
     const brevisRequest = new ethers.Contract('0xa082F86d9d1660C29cf3f962A31d7D20E367154F', brevisRequestABI, signer);

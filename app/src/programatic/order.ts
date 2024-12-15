@@ -1,6 +1,5 @@
 import { MaxUint256 } from '@ethersproject/constants';
 import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
-import { COMPOSABLE_COW_CONTRACT_ADDRESS } from '@cowprotocol/cow-sdk';
 import { COMPOSABLE_COW_ABI } from '../extras/ComposablecowABI';
 import { ethers } from 'ethers';
 import { ERC20ABI } from '../extras/CowABI';
